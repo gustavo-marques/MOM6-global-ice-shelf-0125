@@ -6,10 +6,47 @@
 
 from mpl_toolkits.basemap import Basemap
 import numpy as np
+import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
+import cartopy.feature as cfeature
+from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 from midas.rectgrid import *
 import netCDF4
+from oceans.colormaps import cm
 import os
+
+def plt_latlon2(lon,lat,var,depth,varname,varunits,levs,date,ind,projection=ccrs.PlateCarree()):
+    if not os.path.exists(varname):
+        os.system('mkdir '+ varname)
+
+    LAND = cfeature.NaturalEarthFeature('physical', 'land', '100m',
+                                    edgecolor='face',
+                                    facecolor=cfeature.COLORS['land'])
+
+    bbox=[lon.min(), lon.max(), lat.min(), lat.max()]
+    fig, ax = plt.subplots(figsize=(8, 6),
+                           subplot_kw=dict(projection=projection))
+    ax.set_extent(bbox)
+    ax.add_feature(LAND, facecolor='0.75')
+    ax.coastlines(resolution='100m')
+    gl = ax.gridlines(draw_labels=True)
+    gl.xlabels_top = gl.ylabels_right = False
+    gl.xformatter = LONGITUDE_FORMATTER
+    gl.yformatter = LATITUDE_FORMATTER
+    cs = ax.pcolormesh(lon, lat, var, cmap=cm.odv)
+    cbar = fig.colorbar(cs, extend='both',orientation='horizontal',
+                     ticks=[levs.min(),(np.abs(levs.max())-np.abs(levs.min()))/2.0,levs.max()])
+    cbar.set_label(r'%s [%s]' % (varname,varunits))
+    #cm=ax.contourf(lon,lat,var,levs,cmap=mymap,extend='both')
+    #ax.contour(lon,lat,depth,5,colors='w',linewidths=2)
+    ax.set_title('%s - %s' % (varname,date))
+    ax.set_xlabel('Lon, deg E')
+    ax.set_ylabel('Lat, deg N')
+    plt.tight_layout()
+    s = str("plt.savefig('%s/%s-%04d.png',bbox_inches='tight')"% (varname,varname,ind))
+    eval(s)
+    plt.close('all')
+    return
 
 def plt_latlon(lon,lat,var,depth,varname,varunits,levs,date,ind,mymap=plt.cm.jet):
     if not os.path.exists(varname):
@@ -18,20 +55,20 @@ def plt_latlon(lon,lat,var,depth,varname,varunits,levs,date,ind,mymap=plt.cm.jet
     fig = plt.figure()
     ax = fig.add_subplot(111,axisbg='gray')
     cm=ax.contourf(lon,lat,var,levs,cmap=mymap,extend='both')
-    ax.contour(lon,lat,D,5,colors='w',linewidths=2)
+    ax.contour(lon,lat,depth,5,colors='w',linewidths=2)
     cbar=plt.colorbar(cm,orientation='horizontal',
                      ticks=[levs.min(),(np.abs(levs.max())-np.abs(levs.min()))/2.0,levs.max()])
-    cbar.set_label(r'%s [%s]' %(str(varname,varunits)))
+    cbar.set_label(r'%s [%s]' % (varname,varunits))
     #ax.set_aspect('auto')
     #cs.cmap.set_under('b')
     #cs.cmap.set_over('r')
     #cs.set_clim(levs[0], levs[-1])
-    ax.set_title('%s - %s' %(str(varname,date)))
+    ax.set_title('%s - %s' % (varname,date))
     ax.set_xlabel('Lon, deg E')
     ax.set_ylabel('Lat, deg N')
     plt.grid()
     plt.tight_layout()
-    s = str("plt.savefig('%s/%s-%04d.png',bbox_inches='tight')"% (varname,exp,ind))
+    s = str("plt.savefig('%s/%s-%04d.png',bbox_inches='tight')"% (varname,varname,ind))
     eval(s)
     plt.close('all')
     return

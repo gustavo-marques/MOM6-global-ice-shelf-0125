@@ -63,7 +63,7 @@ def get_depth(h,D):
 newlat=np.resize(lats,(NZ,NY,NX))
 newlon=np.resize(lons,(NZ,NY,NX))
 
-tm=2 # number of nc files
+#tm=2 # number of nc files
 # loop through time and plot surface fields
 for t in range(tm):
     date = t0 + datetime.timedelta(days=time[t])
